@@ -24,8 +24,10 @@ int main(int argc, char *argv[])
     close(infile);//added
     close(outfile);//added
   }
+
+  free(program_state);
   //I think this is how this works //original
-  //free((void*)outfile);
-  //free((void*)infile);
+  // free((void*)outfile);
+  // free((void*)infile);
   return EXIT_SUCCESS;
 }

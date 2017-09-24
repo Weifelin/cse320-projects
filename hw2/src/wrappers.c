@@ -18,6 +18,7 @@ Calloc(size_t nmemb, size_t size)
 {
   void* ret;
   if ((ret = calloc(nmemb, size)) == NULL) {
+    free(ret);//added
     perror("Out of Memory");
     exit(EXIT_FAILURE);
   }

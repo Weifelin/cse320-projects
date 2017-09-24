@@ -29,6 +29,8 @@ void parse_args(int argc, char *argv[])
   free(joined_argv);
 
   program_state = Calloc(1, sizeof(state_t));
+
+
   for (i = 0; optind < argc; ++i) {
     debug("%d opterr: %d", i, opterr);
     debug("%d optind: %d", i, optind);
@@ -41,16 +43,23 @@ void parse_args(int argc, char *argv[])
           if ((program_state->encoding_to = determine_format(optarg)) == 0)
             //goto errorcase;
             print_state();//added
-        }
-        case '?': {
-          if (optopt != 'h')
-            fprintf(stderr, KRED "-%c is not a supported argument\n" KNRM,
-                    optopt);
+          }
+          case '?': {
+            if (optopt != 'h'){
+              fprintf(stderr, KRED "-%c is not a supported argument\n" KNRM,
+                optopt);
 
         /*case "errorcase"[0]:*/
           //errorcase://added
           print_state();//added
+          //free(program_state);//added
           USAGE(argv[0]);
+        } else if (optopt == 'h')
+        {
+            free(program_state);//added
+            USAGE(argv[0]);
+            exit(EXIT_SUCCESS);
+          }
           //exit(0);
         }
 
@@ -71,7 +80,8 @@ void parse_args(int argc, char *argv[])
       optind++;
     }
   }
-  free(joined_argv);
+  //free(program_state);//added
+  //free(joined_argv);
 }
 
 format_t
@@ -155,11 +165,12 @@ print_state()
     exit(EXIT_FAILURE);
   }
   info("program_state {\n"
-         "  format_t encoding_to = 0x%X;\n"
-         "  format_t encoding_from = 0x%X;\n"
-         "  char *in_file = '%s';\n"
-         "  char *out_file = '%s';\n"
-         "};\n",
-         program_state->encoding_to, program_state->encoding_from,
-         program_state->in_file, program_state->out_file);
+   "  format_t encoding_to = 0x%X;\n"
+   "  format_t encoding_from = 0x%X;\n"
+   "  char *in_file = '%s';\n"
+   "  char *out_file = '%s';\n"
+   "};\n",
+   program_state->encoding_to, program_state->encoding_from,
+   program_state->in_file, program_state->out_file);
+  free(program_state);
 }

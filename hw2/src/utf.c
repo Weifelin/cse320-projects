@@ -44,6 +44,7 @@ check_bom()
 
   if (program_state->in_file == NULL) {
     error("%s\n", "In file not specified");
+    free(program_state);//added
     exit(EXIT_FAILURE);
   }
   fd = Open(program_state->in_file, O_RDONLY);
@@ -82,6 +83,7 @@ check_bom()
     exit(EXIT_FAILURE);
   }
   close(fd);
+  //free(program_state);
 }
 
 int
