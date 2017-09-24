@@ -1,7 +1,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include "wrappers.h"
+//#include "wrappers.h"
 
 #define TOP_TWO_BYTES_FROM_THREE(b) ((b & 0xFFFF00) >> 8)
 #define LOWER_TWO_BYTES(b) ((b & 0xFFFF))
@@ -10,9 +10,12 @@
 #define AS_BYTE(x) ((char*)x)
 #define AS_GLYF(x) ((utf8_glyph_t*)x)
 
-const char *STR_UTF16BE  = "UTF16BE";
+/*const char *STR_UTF16BE  = "UTF16BE";
 char *const STR_UTF16LE = "UTF16LE";
-char const *STR_UTF8  = "UTF8";
+char const *STR_UTF8  = "UTF8";*/
+const char *STR_UTF16BE;//added
+char *const STR_UTF16LE;//added
+char const *STR_UTF8;//added
 
 typedef enum { UTF16LE = 0xFFFE, UTF16BE = 0xFEFF, UTF8 = 0xBFBBEF } format_t;
 
@@ -97,6 +100,7 @@ int from_utf16be_to_utf8(int infile, int outfile);
 int transcribe(int infile, int outfile);
 
 convertion_func_t get_encoding_function();
+//convertion_func_t get_encoding_function(int infile, int outfile);//added
 
 /* UTF8 Encoding Function Type, encoding functions, and getter */
 typedef utf8_glyph_t (*utf8_encoding_func_t)(code_point_t code_point);
@@ -111,12 +115,16 @@ utf8_encoding_func_t get_utf8_encoding_function(size_t size);
 /* UTF8 Decoding Function Type, decoding functions and getter */
 typedef code_point_t (*utf8_decoding_func_t)(utf8_glyph_t);
 
+//typedef code_point_t (*utf8_decoding_func_t)(utf8_glyph_t glyph, size_t size);//added
+
 code_point_t utf8_one_byte_decode(utf8_glyph_t glyph);
 code_point_t utf8_two_byte_decode(utf8_glyph_t glyph);
 code_point_t utf8_three_byte_decode(utf8_glyph_t glyph);
 code_point_t utf8_four_byte_decode(utf8_glyph_t glyph);
 
+//utf8_decoding_func_t get_utf8_decoding_function(size_t size);
 utf8_decoding_func_t get_utf8_decoding_function(size_t size);
+
 
 bool is_upper_surrogate_pair(utf16_glyph_t glyph);
 bool is_lower_surrogate_pair(utf16_glyph_t glyph);
@@ -150,9 +158,8 @@ utf16_glyph_t code_point_to_utf16be_glyph(code_point_t code_point, size_t *size_
 
 #define elsif else if
 
-#define USAGE(prog_name)                                                       \
-  do {                                                                         \
-    fprintf(stderr,                                                            \
+#define USAGE(prog_name) do {\
+    fprintf(stderr, "USAGE: %s %s\n", prog_name,                               \
             "\n%s [-h] -e ENCODING INPUT_FILE OUTPUT_FILE \n"                  \
             "\n"                                                               \
             "Translates unicode files between utf-8, utf-16le, and utf-16be\n" \
@@ -169,6 +176,7 @@ utf16_glyph_t code_point_to_utf16be_glyph(code_point_t code_point, size_t *size_
             "            Must contain a Byte Order Marking (BOM)\n"            \
             "\n"                                                               \
             "OUTPUT_FILE Output file\n"                                        \
-            "            Will contain a Byte Order Marking (BOM)\n",           \
-            (prog_name));                                                      \
+            "            Will contain a Byte Order Marking (BOM)\n"/*,*/           \
+            /*(prog_name)*/);                                                      \
   } while (0)
+

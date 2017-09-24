@@ -2,9 +2,10 @@
 #include "utf.h"
 #include "wrappers.h"
 #include <stdlib.h>
+//#include "args.c"
+//#include "utf.c"
 
-int
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
   int infile, outfile, in_flags, out_flags;
   parse_args(argc, argv);
@@ -16,11 +17,15 @@ main(int argc, char *argv[])
   outfile = Open(program_state->out_file, out_flags);
   lseek(SEEK_SET, program_state->bom_length, infile); /* Discard BOM */
   get_encoding_function()(infile, outfile);
+  //get_encoding_function(infile, outfile);//added
+
   if(program_state != NULL) {
-    close((int)program_state);
+    //close((int)program_state);
+    close(infile);//added
+    close(outfile);//added
   }
-  //I think this is how this works
-  free((void*)outfile);
-  free((void*)infile);
+  //I think this is how this works //original
+  //free((void*)outfile);
+  //free((void*)infile);
   return EXIT_SUCCESS;
 }

@@ -40,6 +40,10 @@ int
 from_utf16be_to_utf8(int infile, int outfile)
 {
   /* TODO */
+  int i; //for compile. delete this line later
+  i = infile - outfile; //for compile. delete this line later.
+  printf("for complile. Delete this line later.: %i\n", i); //for complile. Delete this line later.
+
   return -1;
 }
 

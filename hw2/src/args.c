@@ -6,6 +6,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+//#include "wrappers.c"//added
+
 int opterr;
 int optopt;
 int optind;
@@ -13,8 +15,7 @@ char *optarg;
 
 state_t *program_state;
 
-void
-parse_args(int argc, char *argv[])
+void parse_args(int argc, char *argv[])
 {
   int i;
   char option;
@@ -35,16 +36,21 @@ parse_args(int argc, char *argv[])
         case 'e': {
           info("Encoding Argument: %s", optarg);
           if ((program_state->encoding_to = determine_format(optarg)) == 0)
-            goto errorcase;
+            //goto errorcase;
+            print_state();//added
         }
         case '?': {
           if (optopt != 'h')
             fprintf(stderr, KRED "-%c is not a supported argument\n" KNRM,
                     optopt);
-        case "errorcase"[0]:
+
+        /*case "errorcase"[0]:*/
+          //errorcase://added
+          print_state();//added
           USAGE(argv[0]);
-          exit(0);
+          //exit(0);
         }
+
         default: {
           break;
         }
@@ -80,25 +86,34 @@ determine_format(char *argument)
 char*
 bom_to_string(format_t bom){
   switch(bom){
-    case UTF8: return STR_UTF8;
-    case UTF16BE: return STR_UTF16BE;
-    case UTF16LE: return STR_UTF16LE;
+    case UTF8: return (char*)STR_UTF8;
+    case UTF16BE: return (char*)STR_UTF16BE;
+    case UTF16LE: return (char*)STR_UTF16LE;
   }
   return "UNKNOWN";
 }
 
-char*
-join_string_array(int count, char *array[])
+char* join_string_array(int count, char *array[]) //count = argc.
 {
   char *ret;
-  char charArray[count];
+  int ret_len = 2*count; //added
+  //char charArray[count];
+  char charArray[ret_len]; //added
+
+  for (int i = 0; i < ret_len; ++i) //added
+  {
+    charArray[i] = '\0';
+  }
+
   int i;
   int len = 0, str_len, cur_str_len;
 
   str_len = array_size(count, array);
-  ret = &charArray;
+  //ret = &charArray;
+  ret = charArray;
 
-  for (i = 0; i < count; ++i) {
+
+  for (i = 0; /*i < count*/ i<str_len; ++i) {
     cur_str_len = strlen(array[i]);
     memecpy(ret + len, array[i], cur_str_len);
     len += cur_str_len;
@@ -114,7 +129,7 @@ array_size(int count, char *array[])
 {
   int i, sum = 1; /* NULL terminator */
   for (i = 0; i < count; ++i) {
-    sum += strlen(array[i]);
+    sum += strlen(array[i]); // doesn't include NULL terminator.
     ++sum; /* For the spaces */
   }
   return sum+1;
@@ -123,7 +138,7 @@ array_size(int count, char *array[])
 void
 print_state()
 {
-errorcase:
+//errorcase:
   if (program_state == NULL) {
     error("program_state is %p", (void*)program_state);
     exit(EXIT_FAILURE);

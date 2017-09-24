@@ -38,6 +38,9 @@ int
 from_utf16le_to_utf8(int infile, int outfile)
 {
   /* TODO */
+  int i; ////for complile. Delete this line later.
+  i = infile - outfile; //for complile. Delete this line later.
+  printf("for complile. Delete this line later.: %i\n", i); //for complile. Delete this line later.
   return -1;
 }
 
