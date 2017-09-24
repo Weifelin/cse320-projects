@@ -93,11 +93,13 @@ Test(wrappers_suite, reverse_bytes) {
     unsigned long l = 0xdeadbeefdeadcafe;
 
     reverse_bytes(&c, sizeof c);
+    //printf("%lu\n", sizeof s );
     reverse_bytes(&s, sizeof s);
     reverse_bytes(&i, sizeof i);
     reverse_bytes(&l, sizeof l);
 
     cr_assert_eq(c, 0x10);
+    //printf("%i\n", s);
     cr_assert_eq(s, 0xefbe);
     cr_assert_eq(i, 0xefbeadde);
     cr_assert_eq(l, 0xfecaaddeefbeadde);
@@ -121,6 +123,9 @@ Test(args_suite, determine_format) {
     format_t utf16le = determine_format(sutf16le);
     format_t utf16be = determine_format(sutf16be);
 
+    //cr_assert_eq(utf8, UTF8);
+    //cr_assert_eq(utf16le, UTF16LE);
+    //cr_assert_eq(utf16be, UTF16BE);
     cr_assert_eq(utf8, UTF8);
     cr_assert_eq(utf16le, UTF16LE);
     cr_assert_eq(utf16be, UTF16BE);

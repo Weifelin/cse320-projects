@@ -14,6 +14,9 @@ int optind;
 char *optarg;
 
 state_t *program_state;
+//STR_UTF16BE  = "UTF16BE"; //added
+//STR_UTF16LE = "UTF16LE";//added;
+//STR_UTF8  = "UTF8";//added
 
 void parse_args(int argc, char *argv[])
 {
@@ -93,37 +96,6 @@ bom_to_string(format_t bom){
   return "UNKNOWN";
 }
 
-char* join_string_array(int count, char *array[]) //count = argc.
-{
-  char *ret;
-  int ret_len = 2*count; //added
-  //char charArray[count];
-  char charArray[ret_len]; //added
-
-  for (int i = 0; i < ret_len; ++i) //added
-  {
-    charArray[i] = '\0';
-  }
-
-  int i;
-  int len = 0, str_len, cur_str_len;
-
-  str_len = array_size(count, array);
-  //ret = &charArray;
-  ret = charArray;
-
-
-  for (i = 0; /*i < count*/ i<str_len; ++i) {
-    cur_str_len = strlen(array[i]);
-    memecpy(ret + len, array[i], cur_str_len);
-    len += cur_str_len;
-    memecpy(ret + len, " ", 1);
-    len += 1;
-  }
-
-  return ret;
-}
-
 int
 array_size(int count, char *array[])
 {
@@ -134,6 +106,45 @@ array_size(int count, char *array[])
   }
   return sum+1;
 }
+char* join_string_array(int count, char *array[]) //count = argc.
+{
+  //char *ret;
+
+  //int ret_len = 2*count; //added
+  //char charArray[count];
+  //char charArray[ret_len]; //added
+
+  int i;
+  int len = 0, str_len, cur_str_len;
+
+  str_len = array_size(count, array);
+
+  //char charArray[str_len];
+  //char ret[str_len];
+  char *ret = (char*) malloc(str_len);
+
+  for (int j = 0; j < str_len; ++j) //added
+  {
+    //charArray[j] = '\0';
+    ret[j] = '\0';
+  }
+
+  //ret = &charArray;
+  //ret = charArray;
+
+
+  for (i = 0; i < count; ++i) {
+    cur_str_len = strlen(array[i]);
+    memecpy(ret + len, array[i], cur_str_len);
+    len += cur_str_len;
+    memecpy(ret + len, " ", 1);
+    len += 1;
+  }
+
+  return ret;
+}
+
+
 
 void
 print_state()

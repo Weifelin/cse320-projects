@@ -6,6 +6,9 @@
 
 //#include "wrappers.c" //added
 
+
+
+
 convertion_func_t
 get_encoding_function()
 //convertion_func_t //added
@@ -125,5 +128,7 @@ utf16_glyph_to_code_point(utf16_glyph_t *glyph)
 bool
 is_code_point_surrogate(code_point_t code_point)
 {
-  return (code_point >= 10000);
+  //return (code_point >= 10000);
+    return (code_point >= 0x10000);
+
 }

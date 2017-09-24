@@ -13,9 +13,12 @@
 /*const char *STR_UTF16BE  = "UTF16BE";
 char *const STR_UTF16LE = "UTF16LE";
 char const *STR_UTF8  = "UTF8";*/
-const char *STR_UTF16BE;//added
-char *const STR_UTF16LE;//added
-char const *STR_UTF8;//added
+// const char *STR_UTF16BE;//added
+// const char * STR_UTF16LE;//added
+// const char * STR_UTF8;//added
+#define STR_UTF16BE "UTF16BE" //added
+#define STR_UTF16LE "UTF16LE" //added
+#define STR_UTF8 "UTF8" //added
 
 typedef enum { UTF16LE = 0xFFFE, UTF16BE = 0xFEFF, UTF8 = 0xBFBBEF } format_t;
 
