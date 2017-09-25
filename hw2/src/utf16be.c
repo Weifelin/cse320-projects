@@ -39,12 +39,56 @@ from_utf16be_to_utf16le(int infile, int outfile)
 int
 from_utf16be_to_utf8(int infile, int outfile)
 {
-  /* TODO */
-  int i; //for compile. delete this line later
-  i = infile - outfile; //for compile. delete this line later.
-  printf("for complile. Delete this line later.: %i\n", i); //for complile. Delete this line later.
 
-  return -1;
+  int inode_in, inode_out;
+  struct stat file_stat;
+
+  int ret_in = fstat(infile, &file_stat);
+  if (ret_in<0)
+  {
+    exit(EXIT_FAILURE);
+  }
+  inode_in = file_stat.st_ino;
+
+  int ret_out = fstat(outfile, &file_stat);
+  if (ret_out<0)
+  {
+    exit(EXIT_FAILURE);
+  }
+
+  inode_out = file_stat.st_ino;
+
+  if (inode_in == inode_out)
+  {
+    exit(EXIT_FAILURE);
+  }
+
+  int ret = -1;
+ /* int bom;
+  utf8_glyph_t utf8_buf;
+  ssize_t bytes_read;
+  size_t remaining_bytes;
+  size_t size_of_glyph;
+  ssize_t bytes_to_write;
+
+  code_point_t code_point;
+  utf16_glyph_t utf16_buf;
+
+  bom = UTF8;
+
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+  reverse_bytes(&bom, 4);
+#endif
+  write_to_bigendian(outfile, &bom, 3);
+
+
+  while ((bytes_read = read_to_bigendian(infile, &(utf16_buf.upper_bytes), 2)) > 0) {
+    code_point
+  }*/
+
+
+
+  return ret;
 }
 
 utf16_glyph_t

@@ -38,9 +38,34 @@ int
 from_utf16le_to_utf8(int infile, int outfile)
 {
   /* TODO */
-  int i; ////for complile. Delete this line later.
+  /*int i; ////for complile. Delete this line later.
   i = infile - outfile; //for complile. Delete this line later.
   printf("for complile. Delete this line later.: %i\n", i); //for complile. Delete this line later.
+  */
+
+  int inode_in, inode_out;
+  struct stat file_stat;
+
+  int ret_in = fstat(infile, &file_stat);
+  if (ret_in<0)
+  {
+    exit(EXIT_FAILURE);
+  }
+  inode_in = file_stat.st_ino;
+
+  int ret_out = fstat(outfile, &file_stat);
+  if (ret_out<0)
+  {
+    exit(EXIT_FAILURE);
+  }
+
+  inode_out = file_stat.st_ino;
+
+  if (inode_in == inode_out)
+  {
+    exit(EXIT_FAILURE);
+  }
+
   return -1;
 }
 
