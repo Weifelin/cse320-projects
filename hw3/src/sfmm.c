@@ -47,11 +47,13 @@ sf_footer* get_footer_pointer_from_hp(sf_header* hp){
 
 int add_to_free_list(sf_free_header* to_be_added){
     int ret = -1;
+    size_t blocksize = to_be_added-> header.block_size << 4;
+
     for (int i = 0; i < FREE_LIST_COUNT; ++i){
         uint16_t min_l = seg_free_list[i].min;
         uint16_t max_l = seg_free_list[i].max;
 
-        size_t blocksize = to_be_added-> header.block_size << 4;
+
 
         if (blocksize >= min_l && blocksize <= max_l)
         {
@@ -64,6 +66,8 @@ int add_to_free_list(sf_free_header* to_be_added){
                 to_be_added -> prev = NULL;
                 seg_free_list[i].head = to_be_added;
             }else{
+                to_be_added -> next = NULL;
+                to_be_added -> prev = NULL;
                 seg_free_list[i].head = to_be_added;
             }
 
@@ -174,6 +178,8 @@ sf_free_header* mem_init(void* page_start){
                 seg_free_list[i].head -> prev = NULL;*/
                 //seg_free_list[i].head = &headers;
                 //seg_free_list[i].head = headers;
+
+
                 if (seg_free_list[i].head != NULL)
                 {
                     add_to_free_list(headers);
@@ -183,6 +189,7 @@ sf_free_header* mem_init(void* page_start){
 
                 //break;
                 return seg_free_list[i].head;
+                //return headers;
             }
 
         }
@@ -298,9 +305,22 @@ void *sf_malloc(size_t size) {
         sfh = search_in_list(sfbloc_sz, list.head);
 
 
-
         if (sfh != NULL)
         {
+            //sf_snapshot();
+            //printf("sfh block_size: %i\n", sfh-> header.block_size <<4);
+            size_t sfh_blocksz = sfh -> header.block_size << 4;
+            //size_t reminder_blck_sz = sfh_blocksz - sfbloc_sz;
+            for (int i = 0; i < FREE_LIST_COUNT; ++i)
+            {
+                uint16_t min_l = seg_free_list[i].min;
+                uint16_t max_l = seg_free_list[i].max;
+                if (sfh_blocksz >= min_l && sfh_blocksz <= max_l)
+                {
+                    remove_from_free_list(sfh, &seg_free_list[i]);
+                }
+            }
+
             break;
         }
 
@@ -327,15 +347,20 @@ void *sf_malloc(size_t size) {
         }
 
         //try to coalesce with previous block.
+
+        //sf_snapshot();
         sf_header* h_p = &(sf_free_header_temp -> header);
         sf_footer* fp = get_footer_pointer_from_hp(h_p);
-        sf_footer* pre_fp = (sf_footer*)h_p - 8;
+        sf_footer* pre_fp = (sf_footer*)((void*)h_p - 8);
         sf_header* pre_hp = get_header_pointer_from_fp(pre_fp);
 
         sf_free_header* toCoalesce;
+        size_t blck_sz = pre_hp-> block_size <<4;
+        //printf("allocated: %i, %i\n", pre_hp->allocated, pre_fp->allocated);
 
         if(!(pre_fp->allocated)){
-            size_t blck_sz = pre_hp-> block_size <<4;
+
+
 
             for (int i = 0; i < FREE_LIST_COUNT; ++i)
             {
@@ -345,6 +370,7 @@ void *sf_malloc(size_t size) {
                 if (blck_sz >= min_l && blck_sz <= max_l)
                 {
                     toCoalesce = search_head_in_list(pre_hp, seg_free_list[i].head);
+                    //printf("toCoalesce: %i, i: %i\n", toCoalesce->header.block_size <<4, i);
                     if (toCoalesce == NULL)
                     {
                         printf("%s\n", "Cannot Find this free header in free_list");
@@ -358,6 +384,7 @@ void *sf_malloc(size_t size) {
                         printf("%s\n", "Not removed sucessfully.");
                     }
 
+
                     break;
                 }
             }
@@ -367,8 +394,9 @@ void *sf_malloc(size_t size) {
             sf_header* new_header_p = pre_hp;
             sf_footer* new_footer_p = fp;
 
-            size_t current_blck_sz =  h_p -> block_size <<4;
-            size_t new_blck_sz = blck_sz + current_blck_sz;
+            //size_t current_blck_sz =  h_p -> block_size <<4;
+            //size_t new_blck_sz = blck_sz + current_blck_sz;
+            size_t new_blck_sz = (h_p-> block_size << 4) + (pre_hp->block_size <<4);
             int zeros = 0;
 
             memcpy(new_header_p, &zeros, 8);
@@ -383,6 +411,8 @@ void *sf_malloc(size_t size) {
 
             add_to_free_list(to_be_added);
 
+
+
             /*if (new_blck_sz >= sfbloc_sz)
             {
                 sfh = to_be_added;
@@ -393,9 +423,27 @@ void *sf_malloc(size_t size) {
         {
             free_list list = seg_free_list[i];
             sfh = search_in_list(sfbloc_sz, list.head);
-            break;
+
+            if (sfh != NULL)
+            {
+
+                size_t sfh_blocksz = sfh -> header.block_size << 4;
+            //size_t reminder_blck_sz = sfh_blocksz - sfbloc_sz;
+                for (int i = 0; i < FREE_LIST_COUNT; ++i)
+                {
+                    uint16_t min_l = seg_free_list[i].min;
+                    uint16_t max_l = seg_free_list[i].max;
+                    if (sfh_blocksz >= min_l && sfh_blocksz <= max_l)
+                    {
+                        remove_from_free_list(sfh, &seg_free_list[i]);
+                    }
+                }
+                break;
+            }
         }
     }
+
+    //sf_snapshot();
 
     /*Suppose now sfh contains the right block.*/
     // splint
@@ -453,7 +501,12 @@ void *sf_malloc(size_t size) {
         new_free_footer -> block_size = reminder_blck_sz >> 4;
 
         sf_free_header* new_free_blck = (sf_free_header*) new_free_header;
+        new_free_blck ->next = NULL;
+        new_free_blck -> prev = NULL;
+
         int add_b = add_to_free_list(new_free_blck);
+        //sf_snapshot();
+
 
 
         if (add_b == -1)
@@ -641,6 +694,10 @@ void sf_free(void *ptr) {
     ptr_footer -> block_size = blocksize >> 4;
 
     list_header_temp = (sf_free_header*)ptr_header;
+    list_header_temp -> next = NULL;
+    list_header_temp -> prev = NULL;
+
+
     int add_flg = add_to_free_list(list_header_temp);
     if (add_flg == -1)
     {
