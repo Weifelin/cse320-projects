@@ -2,6 +2,7 @@
 #include <errno.h>
 #include <signal.h>
 #include "sfmm.h"
+#include <stdio.h>
 
 
 int find_list_index_from_size(int sz) {
@@ -14,6 +15,8 @@ int find_list_index_from_size(int sz) {
 Test(sf_memsuite_student, Malloc_an_Integer_check_freelist, .init = sf_mem_init, .fini = sf_mem_fini) {
 	sf_errno = 0;
 	int *x = sf_malloc(sizeof(int));
+
+	printf("%s\n", "Test fine");
 
 	cr_assert_not_null(x);
 
@@ -71,15 +74,18 @@ Test(sf_memsuite_student, free_no_coalesce, .init = sf_mem_init, .fini = sf_mem_
 Test(sf_memsuite_student, free_coalesce, .init = sf_mem_init, .fini = sf_mem_fini) {
 	sf_errno = 0;
 	/* void *w = */ sf_malloc(sizeof(long));
-	void *x = sf_malloc(sizeof(double) * 11);
-	void *y = sf_malloc(sizeof(char));
+	void *x = sf_malloc(sizeof(double) * 11); //8*11= 88. Should have 96 payload + 16 = 112 blocksize.
+	void *y = sf_malloc(sizeof(char)); // should have 32 bytes block size.
 	/* void *z = */ sf_malloc(sizeof(int));
 
 	sf_free(y);
+
 	sf_free(x);
 
 	free_list *fl_y = &seg_free_list[find_list_index_from_size(32)];
 	free_list *fl_x = &seg_free_list[find_list_index_from_size(144)];
+
+
 
 	cr_assert_null(fl_y->head, "Unexpected block in list!");
 	cr_assert_not_null(fl_x->head, "No block in expected free list");
