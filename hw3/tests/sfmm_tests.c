@@ -16,8 +16,6 @@ Test(sf_memsuite_student, Malloc_an_Integer_check_freelist, .init = sf_mem_init,
 	sf_errno = 0;
 	int *x = sf_malloc(sizeof(int));
 
-	printf("%s\n", "Test fine");
-
 	cr_assert_not_null(x);
 
 	*x = 4;
@@ -190,4 +188,115 @@ Test(sf_memsuite_student, realloc_smaller_block_free_block, .init = sf_mem_init,
 //STUDENT UNIT TESTS SHOULD BE WRITTEN BELOW
 //DO NOT DELETE THESE COMMENTS
 //############################################
+Test(sf_memsuite_student, Malloc_with_long_double, .init = sf_mem_init, .fini = sf_mem_fini){
+	sf_errno = 0;
+	long double* ld = sf_malloc(sizeof(ld));
+	long double* ld2 = sf_malloc(sizeof(ld));
+
+	cr_assert_not_null(ld);
+	cr_assert_not_null(ld2);
+
+	*ld = 0.333333333333333333L;
+	*ld2 = 0.222222222222222222L;
+	cr_assert(*ld == 0.333333333333333333L , "sf_malloc failed to give proper space for long double");
+	cr_assert(*ld2 == 0.222222222222222222L , "sf_malloc failed to give proper space for long double");
+
+	sf_header *header1 = (sf_header*)((char*)ld - 8);
+	sf_header *header2 = (sf_header*)((char*)ld2 - 8);
+
+	/* There should be one block of size 4032 in list 3 */
+	free_list *fl = &seg_free_list[find_list_index_from_size(PAGE_SZ - (header1->block_size << 4) - (header2->block_size << 4))];
+	cr_assert_not_null(fl, "Free list is null");
+
+	cr_assert_not_null(fl->head, "No block in expected free list!");
+	cr_assert_null(fl->head->next, "Found more blocks than expected!");
+	cr_assert(fl->head->header.block_size << 4 == 4032);
+	cr_assert(fl->head->header.allocated == 0);
+	cr_assert(sf_errno == 0, "sf_errno is not zero!");
+	cr_assert(get_heap_start() + PAGE_SZ == get_heap_end(), "Allocated more than necessary!");
+
+}
+
+Test(sf_memsuite_student, realloc_smaller_block_from_large_blk_with_splinter, .init = sf_mem_init, .fini = sf_mem_fini) {
+	void *x = sf_malloc(sizeof(int) * 200);
+	void *y = sf_realloc(x, sizeof(char));
+
+	cr_assert_not_null(y, "y is NULL!");
+	cr_assert(x == y, "Payload addresses are different!");
+
+	sf_header *header = (sf_header*)((char*)y - 8);
+	cr_assert(header->allocated == 1, "Allocated bit is not set!");
+	cr_assert(header->block_size << 4 == 32, "Block size not what was expected!");
+
+	free_list *fl = &seg_free_list[find_list_index_from_size(4064)];
+
+	// There should be only one free block of size 4048 in list 3
+	cr_assert_not_null(fl->head, "No block in expected free list!");
+	cr_assert(fl->head->header.allocated == 0, "Allocated bit is set!");
+	cr_assert(fl->head->header.block_size << 4 == 4064, "Free block size not what was expected!");
+}
+
+Test(sf_memsuite_student, realloc_smaller_block_to_zero, .init = sf_mem_init, .fini = sf_mem_fini) {
+	void *x = sf_malloc(256);
+	void *y = sf_realloc(x, 0);
+
+	cr_assert_null(y, "y should be NULL!");
+	//cr_assert(x == y, "Payload addresses are different!");
+
+	//sf_header *header = (sf_header*)((char*)y - 8);
+	// cr_assert(header->allocated == 1, "Allocated bit is not set!");
+	// cr_assert(header->block_size << 4 == 32, "Block size not what was expected!");
+
+	free_list *fl = &seg_free_list[find_list_index_from_size(4096)];
+
+	// There should be only one free block of size 4048 in list 3
+	cr_assert_not_null(fl->head, "No block in expected free list!");
+	cr_assert(fl->head->header.allocated == 0, "Allocated bit is set!");
+	cr_assert(fl->head->header.block_size << 4 == 4096, "Free block size not what was expected!");
+}
+
+Test(sf_memsuite_student, free_coalesce_all, .init = sf_mem_init, .fini = sf_mem_fini) {
+	sf_errno = 0;
+	void *x = sf_malloc(sizeof(long));
+	void *y = sf_malloc(sizeof(double) * 10);
+	void *z = sf_malloc(sizeof(char));
+
+	sf_free(z);
+	sf_free(y);
+	sf_free(x);
+
+	free_list *fl = &seg_free_list[find_list_index_from_size(4096)];
+
+	cr_assert_not_null(fl->head, "No block in expected free list");
+	cr_assert_null(fl->head->next, "Found more blocks than expected!");
+	cr_assert(fl->head->header.block_size << 4 == 4096);
+	cr_assert(fl->head->header.allocated == 0);
+	cr_assert(sf_errno == 0, "sf_errno is not zero!");
+}
+
+Test(sf_memsuite_student, free_coalesce_different_order, .init = sf_mem_init, .fini = sf_mem_fini) {
+	sf_errno = 0;
+	void *x = sf_malloc(sizeof(long));
+	void *y = sf_malloc(sizeof(double) * 10);
+	void *z = sf_malloc(sizeof(char));
+
+	sf_free(x);
+	sf_free(z);
+	sf_free(y);
+
+	free_list *fl = &seg_free_list[find_list_index_from_size(32)];
+
+	cr_assert_not_null(fl->head, "No block in expected free list");
+	cr_assert_null(fl->head->next, "Found more blocks than expected!");
+	cr_assert(fl->head->header.block_size << 4 == 32);
+	cr_assert(fl->head->header.allocated == 0);
+	cr_assert(sf_errno == 0, "sf_errno is not zero!");
+}
+
+
+
+
+
+
+
 
