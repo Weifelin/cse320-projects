@@ -309,7 +309,7 @@ void *sf_malloc(size_t size) {
         {
             //sf_snapshot();
             //printf("sfh block_size: %i\n", sfh-> header.block_size <<4);
-            size_t sfh_blocksz = sfh -> header.block_size << 4;
+            /*size_t sfh_blocksz = sfh -> header.block_size << 4;
             //size_t reminder_blck_sz = sfh_blocksz - sfbloc_sz;
             for (int i = 0; i < FREE_LIST_COUNT; ++i)
             {
@@ -319,7 +319,7 @@ void *sf_malloc(size_t size) {
                 {
                     remove_from_free_list(sfh, &seg_free_list[i]);
                 }
-            }
+            }*/
 
             break;
         }
@@ -344,6 +344,17 @@ void *sf_malloc(size_t size) {
         {
             sf_errno = ENOMEM;
             return NULL;
+        }
+
+        for (int i = 0; i < FREE_LIST_COUNT; ++i)
+        {
+            uint16_t min_l = seg_free_list[i].min;
+            uint16_t max_l = seg_free_list[i].max;
+            size_t s = sf_free_header_temp -> header.block_size <<4;
+            if (s>=min_l && s<= max_l)
+            {
+                remove_from_free_list(sf_free_header_temp, &seg_free_list[i]);
+            }
         }
 
         //try to coalesce with previous block.
@@ -378,6 +389,7 @@ void *sf_malloc(size_t size) {
                     }
 
                     //remove toCoalesce from freeList.
+                    //sf_snapshot();
                     int is_removed = remove_from_free_list(toCoalesce, &seg_free_list[i]);
                     if (is_removed == -1)
                     {
@@ -394,6 +406,9 @@ void *sf_malloc(size_t size) {
             sf_header* new_header_p = pre_hp;
             sf_footer* new_footer_p = fp;
 
+            //printf("new_header_p: %i\n", new_header_p -> block_size <<4);
+            //printf("new_footer_p: %i\n", new_footer_p -> block_size << 4);
+
             //size_t current_blck_sz =  h_p -> block_size <<4;
             //size_t new_blck_sz = blck_sz + current_blck_sz;
             size_t new_blck_sz = (h_p-> block_size << 4) + (pre_hp->block_size <<4);
@@ -405,11 +420,20 @@ void *sf_malloc(size_t size) {
             new_header_p -> block_size = new_blck_sz >> 4;
             new_footer_p -> block_size = new_blck_sz >> 4;
 
+            //printf("new_header_p: %i\n", new_header_p -> block_size <<4);
+            //printf("new_footer_p: %i\n", new_footer_p -> block_size << 4);
+
+
             sf_free_header* to_be_added = (sf_free_header*) new_header_p;
             to_be_added -> next = NULL;
             to_be_added -> prev = NULL;
 
+            //printf("to_be_added: %i\n", to_be_added -> header.block_size<<4);
+
+
+            //sf_snapshot();
             add_to_free_list(to_be_added);
+            //sf_snapshot();
 
 
 
@@ -427,7 +451,7 @@ void *sf_malloc(size_t size) {
             if (sfh != NULL)
             {
 
-                size_t sfh_blocksz = sfh -> header.block_size << 4;
+                /*size_t sfh_blocksz = sfh -> header.block_size << 4;
             //size_t reminder_blck_sz = sfh_blocksz - sfbloc_sz;
                 for (int i = 0; i < FREE_LIST_COUNT; ++i)
                 {
@@ -437,7 +461,7 @@ void *sf_malloc(size_t size) {
                     {
                         remove_from_free_list(sfh, &seg_free_list[i]);
                     }
-                }
+                }*/
                 break;
             }
         }

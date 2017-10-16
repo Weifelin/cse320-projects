@@ -319,6 +319,14 @@ Test(sf_memsuite_student, Malloc_free_two_pages, .init = sf_mem_init, .fini = sf
 
 	sf_free(x);
 
+	fl = &seg_free_list[find_list_index_from_size(8192)];
+	cr_assert_not_null(fl->head, "No block in expected free list");
+	cr_assert_null(fl->head->next, "Found more blocks than expected!");
+	cr_assert(fl->head->header.block_size << 4 == 8192);
+	cr_assert(fl->head->header.allocated == 0);
+	cr_assert(sf_errno == 0, "sf_errno is not zero!");
+
+
 
 }
 
