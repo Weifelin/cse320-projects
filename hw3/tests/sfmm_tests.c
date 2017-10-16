@@ -293,6 +293,34 @@ Test(sf_memsuite_student, free_coalesce_different_order, .init = sf_mem_init, .f
 	cr_assert(sf_errno == 0, "sf_errno is not zero!");
 }
 
+Test(sf_memsuite_student, Malloc_free_two_pages, .init = sf_mem_init, .fini = sf_mem_fini) {
+	sf_errno = 0;
+	void *x = sf_malloc(sizeof(double));
+
+	size_t page = 4096;
+
+	void* y= sf_malloc(page);
+
+
+	//void* z = sf_malloc(sizeof(int));
+	sf_free(y);
+	//printf("%s\n", "Here");
+	free_list *fl = &seg_free_list[find_list_index_from_size(8160)];
+	cr_assert_not_null(fl->head, "No block in expected free list");
+	cr_assert_null(fl->head->next, "Found more blocks than expected!");
+	cr_assert(fl->head->header.block_size << 4 == 8160);
+	cr_assert(fl->head->header.allocated == 0);
+	cr_assert(sf_errno == 0, "sf_errno is not zero!");
+
+
+
+
+
+
+	sf_free(x);
+
+
+}
 
 
 
