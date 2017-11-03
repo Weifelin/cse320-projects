@@ -1,0 +1,5 @@
+pro1 arg1 > output
+pro1 arg1>output
+pro1 arg1> output
+pro1 arg1 >output
+exit
