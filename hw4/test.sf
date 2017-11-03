@@ -1,0 +1,8 @@
+help
+ls
+cd /
+pwd
+ls -al home
+cd -
+pwd
+exit
