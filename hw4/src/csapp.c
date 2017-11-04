@@ -535,8 +535,10 @@ FILE *Fdopen(int fd, const char *type)
 {
     FILE *fp;
 
-    if ((fp = fdopen(fd, type)) == NULL)
-	unix_error("Fdopen error");
+    if ((fp = fdopen(fd, type)) == NULL){
+	// unix_error("Fdopen error");
+        printf(SYNTAX_ERROR, "Fdopen error.");
+    }
 
     return fp;
 }
@@ -555,8 +557,10 @@ FILE *Fopen(const char *filename, const char *mode)
 {
     FILE *fp;
 
-    if ((fp = fopen(filename, mode)) == NULL)
-	unix_error("Fopen error");
+    if ((fp = fopen(filename, mode)) == NULL){
+	   //unix_error("Fopen error");
+        printf(SYNTAX_ERROR, "file not found" );
+    }
 
     return fp;
 }

@@ -1,5 +1,6 @@
 #ifndef SFISH_H
 #define SFISH_H
+//#define _POSIX_C_SOURCE
 
 /* Format Strings */
 #define EXEC_NOT_FOUND "sfish: %s: command not found\n"
@@ -13,9 +14,12 @@
 #define L_ANGLE        "<"
 #define R_ANGLE        ">"
 #define S_PIPE         "|"
+#define BUFFER_FILE    "buffer.txt"
 
 
 extern char oldpath[4096];
+//volatile extern FILE* fd_in;
+//volatile extern FILE* fd_out;
 
 /*builtin functions*/
 void sfish_help();
@@ -26,13 +30,19 @@ void sfish_pwd();
 
 char** parse_input(char* input);
 int sfish_execute(int args_c, char** args, char* envp[]);
+int sfish_execute_r(int args_c, char** args, char* envp[]);
+int sfish_execute_p(int args_c, char** args, char* envp[]);
+
 
 void sigchld_handler(int s);
 
 
 char* print_prompt();
 
-void rediction_pipe_check_set(char** args_buf);
+int args_validate(char** args_buf);// return
+int array_contain_count(char** args_buf, char* string, int argc);
+int get_first_id(char** args_buf, char* string, int argc);
+int args_validate_and_set(char** args_buf);
 
 
 
