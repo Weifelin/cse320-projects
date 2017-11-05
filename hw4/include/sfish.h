@@ -47,6 +47,8 @@ int array_contain_count(char** args_buf, char* string, int argc);
 int get_first_id(char** args_buf, char* string, int argc);
 int args_validate_and_set(char** args_buf);
 
+void sigint_handler(int sig);
+
 
 
 

@@ -217,14 +217,27 @@
         int status;
         int olderrno = errno;
         // sig_atomic_t oldpid = pid;
-        pid = Waitpid(-1, &status, 0);
+        if((pid = Waitpid(-1, &status, 0)) > 0){
         /**
          * Cheaking status to see if child is terminated normally.
          **/
+            if (WIFEXITED(status))
+            {
+                printf("child %d terminated normally with exit status=%d\n", pid, WEXITSTATUS(status));
+            }else{
+                printf("child %d terminated abnormally\n", pid);
+            }
+        }
+
         errno = olderrno;
         // pid = oldpid;
     }
 
+
+    void sigint_handler(int sig){
+        Sio_puts("SIGINT.\n");
+        _exit(0);
+    }
 
 
 
@@ -272,12 +285,16 @@
         Signal(SIGCHLD, sigchld_handler);
         Sigemptyset(&mask);
         Sigaddset(&mask, SIGCHLD);
+        Signal(SIGINT, SIG_IGN);
+        Signal(SIGTSTP,SIG_IGN);
 
 
             Sigprocmask(SIG_BLOCK, &mask, &prev); //BLOCK SIGCHLD
             if ((pid = Fork()) == 0) //child
             {
                 Sigprocmask(SIG_SETMASK, &prev, NULL);//UNBLOCK FOR CHILD
+                Signal(SIGINT, sigchld_handler);
+                Signal(SIGTSTP, SIG_DFL);
                 //reading.
                 //close(fd[1]);
                 Execvpe(args[0], args, envp);
@@ -291,6 +308,8 @@
             }
             //debug("GOT HERE AFTER SIGSUSPEND\n");
             Sigprocmask(SIG_SETMASK, &prev, NULL); // UNBLOCK FOR PARENT
+            Signal(SIGTSTP, SIG_DFL);
+            Signal(SIGINT, SIG_DFL);
             //pid = getpid();
             return 1;
 
@@ -405,12 +424,16 @@
         Signal(SIGCHLD, sigchld_handler);
         Sigemptyset(&mask);
         Sigaddset(&mask, SIGCHLD);
+        Signal(SIGINT, SIG_IGN);
+        Signal(SIGTSTP, SIG_IGN);
 
 
             Sigprocmask(SIG_BLOCK, &mask, &prev); //BLOCK SIGCHLD
             if ((pid = Fork()) == 0) //child
             {
                 Sigprocmask(SIG_SETMASK, &prev, NULL);//UNBLOCK FOR CHILD
+                Signal(SIGINT, sigchld_handler);
+                Signal(SIGTSTP, SIG_DFL);
                 //reading.
                 //close(fd[1]);
                 dup2(fd[0], STDIN_FILENO);
@@ -504,6 +527,8 @@
             }
             //debug("GOT HERE AFTER SIGSUSPEND\n");
             Sigprocmask(SIG_SETMASK, &prev, NULL); // UNBLOCK FOR PARENT
+            Signal(SIGTSTP, SIG_DFL);
+            Signal(SIGINT, SIG_DFL);
             //pid = getpid();
 
             //dup2(STDIN_FILENO, fd[0]);
@@ -572,12 +597,14 @@
 
         sigset_t mask, prev;
 
-            Signal(SIGCHLD, sigchld_handler);
-            Sigemptyset(&mask);
-            Sigaddset(&mask, SIGCHLD);
+        Signal(SIGCHLD, sigchld_handler);
+        Sigemptyset(&mask);
+        Sigaddset(&mask, SIGCHLD);
+        Signal(SIGTSTP, SIG_IGN);
 
 
-            Sigprocmask(SIG_BLOCK, &mask, &prev); //BLOCK SIGCHLD
+        Sigprocmask(SIG_BLOCK, &mask, &prev); //BLOCK SIGCHLD
+        Signal(SIGINT, SIG_IGN);
 
         for (int p = 1; p <= program_counts; ++p) // remember to give stdout back after 1.finish program_counts -1, and 2. the output passed to program_count
         {
@@ -613,6 +640,9 @@
             if ((pid = Fork()) == 0) //child
             {
                 Sigprocmask(SIG_SETMASK, &prev, NULL);//UNBLOCK FOR CHILD
+
+                Signal(SIGINT, sigchld_handler);
+                Signal(SIGTSTP, SIG_DFL);
 
                 close(fd[2*p-1]);//close previous writing end.
                 dup2(fd[2*p+1], STDOUT_FILENO); // writing end.
@@ -656,6 +686,8 @@
             }
             //debug("GOT HERE AFTER SIGSUSPEND\n");
             Sigprocmask(SIG_SETMASK, &prev, NULL); // UNBLOCK FOR PARENT
+            Signal(SIGTSTP, SIG_DFL);
+            Signal(SIGINT, SIG_DFL);
             //pid = getpid();
             // if (p==1)
             // {
