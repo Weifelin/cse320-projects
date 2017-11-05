@@ -11,7 +11,7 @@
 
     char oldpath[4096];
     volatile sig_atomic_t pid;
-    int fd[2]={STDIN_FILENO, STDOUT_FILENO};
+
 
     /*Shell Builtin command functions*/
     void sfish_help(){
@@ -300,6 +300,10 @@
     int sfish_execute_r(int args_c, char** args, char* envp[]){
         FILE* in_stream = stdin;
         FILE* out_stream = stdout;
+        int fd[2]={STDIN_FILENO, STDOUT_FILENO};
+        int stdin_dup = dup(STDIN_FILENO);
+        int stdout_dup = dup(STDOUT_FILENO);
+
         char* infile = NULL;
         char* outfile = NULL;
 
@@ -313,25 +317,6 @@
             sfish_exit();
         }
 
-        if (strcmp(args[0], "help") == 0)
-        {
-            sfish_help();
-            return 1;
-        }
-
-        if (strcmp(args[0], "cd") == 0)
-        {
-            //printf("\nLOOP-OLDPATH_BEFORE: %s\n", oldpath);
-            sfish_cd(args[1]);
-            //printf("\nLOOP-OLDPATH_AFTER: %s\n", oldpath);
-            return 1;
-        }
-
-        if (strcmp(args[0], "pwd") == 0)
-        {
-            sfish_pwd();
-            return 1;
-        }
 
 
         //determine mode.
@@ -346,13 +331,19 @@
         if (right_i != -1)
             outfile = args[right_i+1];
 
+        //pipe(fd);
+
         if (infile != NULL)
         {
             in_stream = Fopen(infile, "r");
             int instream_fd = fileno(in_stream);
             dup2(instream_fd, STDIN_FILENO);
+            if (outfile == NULL)
+            {
+                fd[1] = fileno(stdout);
+            }
             fd[0] = instream_fd;
-            debug("infile");
+            debug("fd[0]:%i",fd[0]);
         }
 
         if (outfile != NULL)
@@ -361,29 +352,51 @@
             int outstream_fd = fileno(out_stream);
             dup2(outstream_fd, STDOUT_FILENO);
             fd[1] = outstream_fd;
+
         }
 
-        pipe(fd);
         //construct args string for child.
-        int count = 0;
-        while((strcmp(args[count], ">") != 0) && (strcmp(args[count], "<")!= 0)){
-            int ret =  write(fd[1], args[count], strlen(args[count]));
-            if (ret == -1)
-            {
-                printf(SYNTAX_ERROR, "Faild to write");
+        // if (infile == NULL)
+        // {
+            /*int count = 1;
+            while((strcmp(args[count], ">") != 0) && (strcmp(args[count], "<")!= 0)){
+                int ret =  write(fd[1], args[count], strlen(args[count]));
+                debug("args[%i]: %s", count, args[count]);
+                if (ret == -1)
+                {
+                    printf(SYNTAX_ERROR, "Faild to write");
+                }
+                int ret2 =  write(fd[1]," ", 1);
+                if (ret2 == -1)
+                {
+                    printf(SYNTAX_ERROR, "Faild to write space");
+                }
+                count++;
             }
-            int ret2 =  write(fd[1]," ", 1);
-            if (ret2 == -1)
+            int ret_f = write(fd[1], "\n", 1);
+            if (ret_f == -1)
             {
-                printf(SYNTAX_ERROR, "Faild to write space");
-            }
-            count++;
+                printf(SYNTAX_ERROR, "Faild to write newline");
+            }*/
+        // }else{
+
+        // }
+        //building args for child.
+        int args_child_c = 0;
+        //int count = 0;
+        while((strcmp(args[args_child_c], ">") != 0) && (strcmp(args[args_child_c], "<")!= 0)){
+            args_child_c++;
         }
-        int ret_f = write(fd[1], "\n", 1);
-        if (ret_f == -1)
+        char* args_child[args_child_c+1];
+        for (int i = 0; i < (args_child_c+1); ++i)
         {
-            printf(SYNTAX_ERROR, "Faild to write newline");
+            args_child[i] = NULL;
         }
+        for (int i = 0; i < args_child_c; ++i)
+        {
+            args_child[i] = args[i];
+        }
+
 
 
         //laucher below.- lauch other program.
@@ -400,15 +413,17 @@
                 Sigprocmask(SIG_SETMASK, &prev, NULL);//UNBLOCK FOR CHILD
                 //reading.
                 //close(fd[1]);
-                //dup2(fd[0], STDIN_FILENO);
-                FILE* readfrom = Fdopen(fd[0], "r");
+                dup2(fd[0], STDIN_FILENO);
+                dup2(fd[1], STDOUT_FILENO);
+                /*FILE* readfrom = Fdopen(fd[0], "r");
+                debug("child fd[0]:%i",fd[0] );
                 size_t buffersize = 512;
                 char* input_buffer = Malloc(buffersize);
                 memset(input_buffer, '\0', buffersize);
                 int c;
                 int count=0;
-
-                while((c = getc(readfrom)) != '\n'){
+                c = getc(readfrom);
+                while((c != '\n') && c != EOF){
                     if (count == (buffersize-1))
                     {
                         buffersize=2*buffersize;
@@ -417,6 +432,7 @@
 
                     input_buffer[count] = (char) c;
                     count++;
+                    c = getc(readfrom);
                 }
 
                 if (input_buffer[0] == '\0')
@@ -440,7 +456,6 @@
                     exit(1);
                 }
                 int args_cu = 0;
-
                 while(args_temp[args_cu] != NULL){
                     debug("child:%s, length: %i", args_temp[args_cu], (int)strlen(args_temp[args_cu]));
                     args_cu++;
@@ -448,22 +463,35 @@
 
                 debug("\n");
 
-                char* args_child[args_cu+1];
-                for (int i = 0; i < (args_cu+1) ; ++i)
+                char* args_child[args_cu+2];
+                for (int i = 0; i < (args_cu+2) ; ++i)
                 {
                     args_child[i] = NULL;
                 }
-
-                for (int i = 0; i < args_cu; ++i)
+                args_child[0] = args[0];
+                debug("args_child[0]:%s", args_child[0]);
+                for (int i = 1; i < (args_cu+1); ++i)
                 {
-                    args_child[i] = args_temp[i];
+                    args_child[i] = args_temp[i-1];
+                    debug("args_child[%i]:%s",i, args_child[i]);
                 }
 
-                free(args_temp);
+                free(args_temp);*/
+                if (strcmp(args[0], "help") == 0)
+                {
+                    sfish_help();
+                    exit(0);
+                }
+
+                if (strcmp(args[0], "pwd") == 0)
+                {
+                    sfish_pwd();
+                    exit(0);
+                }
 
                 Execvpe(args_child[0], args_child, envp);
-                dup2(fileno(stdout), fd[1]);
-                close(fd[1]);
+                //dup2(fileno(stdout), fd[1]);
+                //close(fd[1]);
                 debug("Return from execvpe\n");
             }
 
@@ -484,10 +512,10 @@
             //Fdopen(STDIN_FILENO);
             //Fdopen(STDOUT_FILENO);
             //dup2(fileno(stdin), fd[0]);
-            //dup2(fileno(stdout), fd[1]);
-            //close(fd[0]);
+            close(fd[1]);
             close(fd[0]);
-
+            dup2(stdin_dup, fileno(stdin));
+            dup2(stdout_dup, fileno(stdout));
 
             debug("reaching here.");
             //Fclose(in_stream);
@@ -499,11 +527,12 @@
     }
 
     int sfish_execute_p(int args_c, char** args, char* envp[]){
-        FILE* in_stream = stdin;
-        FILE* out_stream = stdout;
-        int fd[2] = {STDIN_FILENO, STDOUT_FILENO};
-        char* infile;
-        char* outfile;
+
+
+        int stdin_dup = dup(STDIN_FILENO);
+        int stdout_dup = dup(STDOUT_FILENO);
+        //char* infile;
+        //char* outfile;
 
         if (args[0] == NULL)
         {
@@ -515,100 +544,143 @@
             sfish_exit();
         }
 
-        if (strcmp(args[0], "help") == 0)
-        {
-            sfish_help();
-            return 1;
-        }
-
-        if (strcmp(args[0], "cd") == 0)
-        {
-            //printf("\nLOOP-OLDPATH_BEFORE: %s\n", oldpath);
-            sfish_cd(args[1]);
-            //printf("\nLOOP-OLDPATH_AFTER: %s\n", oldpath);
-
-            return 1;
-        }
-
-        if (strcmp(args[0], "pwd") == 0)
-        {
-            sfish_pwd();
-            return 1;
-        }
 
 
         //determine mode.
 
             //int left = array_contain_count(args, "<", args_c);
             //int right = array_contain_count(args, ">", args_c);
-            //int pipe_sign = array_contain_count(args, "|", args_c);
-            int left_i = get_first_id(args, "<", args_c);
-            int right_i = get_first_id(args, ">", args_c);
+        int pipe_sign = array_contain_count(args, "|", args_c);
+        //int left_i = get_first_id(args, "<", args_c);
+        //int right_i = get_first_id(args, ">", args_c);
+        int program_counts = pipe_sign+1;
 
-
-                if(left_i != -1)
-                    infile = args[left_i+1];
-                if (right_i != -1)
-                    outfile = args[left_i+1];
-
-                if (infile != NULL)
-                {
-                    in_stream = Fopen(infile, "r");
-                    int instream_fd = fileno(in_stream);
-                    dup2(instream_fd, STDIN_FILENO);
-                    fd[0] = instream_fd;
-                    debug("infile");
-                }
-
-                if (outfile != NULL)
-                {
-                    out_stream = Fopen(outfile, "w+");
-                    int outstream_fd = fileno(out_stream);
-                    dup2(outstream_fd, STDOUT_FILENO);
-                    fd[1] = outstream_fd;
-                }
-
-                pipe(fd);
+        int pipe_amount = pipe_sign+2;
+        int fd[2*pipe_amount];
+        //int* fd_temp; //int* fd_temp
+        for (int i = 0; i < pipe_amount; ++i)
+        {
+            //fd_temp = fd+2*i;
+            pipe(&fd[i*2]);//creating n pipe. by starting 0, 2,4...
+        }
 
 
 
-        //laucher below.- lauch other program.
+        int args_index = 0;
+
+        dup2(fd[1], STDOUT_FILENO);
+
         sigset_t mask, prev;
 
-        Signal(SIGCHLD, sigchld_handler);
-        Sigemptyset(&mask);
-        Sigaddset(&mask, SIGCHLD);
+            Signal(SIGCHLD, sigchld_handler);
+            Sigemptyset(&mask);
+            Sigaddset(&mask, SIGCHLD);
 
 
             Sigprocmask(SIG_BLOCK, &mask, &prev); //BLOCK SIGCHLD
+
+        for (int p = 1; p <= program_counts; ++p) // remember to give stdout back after 1.finish program_counts -1, and 2. the output passed to program_count
+        {
+            //construct args_child.
+
+
+            debug("p: %i", p);
+            int args_child_c = 0;
+            while((args[args_index] != NULL)&&(strcmp(args[args_index], "|") != 0)){
+                args_child_c++;
+                args_index++;
+            }
+
+            char* args_child[args_child_c+1];
+            for (int i = 0; i < (args_child_c+1); ++i)
+            {
+                args_child[i] = NULL;
+            }
+
+            int starting = args_index - args_child_c;
+            for (int i = 0; i < args_child_c; ++i){
+                args_child[i] = args[starting+i];
+                debug("args_child[%i]: %s", i, args_child[i]);
+            }
+
+            args_index ++;
+
+            debug("\n");
+
+
+
+
             if ((pid = Fork()) == 0) //child
             {
                 Sigprocmask(SIG_SETMASK, &prev, NULL);//UNBLOCK FOR CHILD
-                //reading.
-                close(fd[1]);
-                Execvpe(args[0], args, envp);
+
+                close(fd[2*p-1]);//close previous writing end.
+                dup2(fd[2*p+1], STDOUT_FILENO); // writing end.
+                dup2(fd[2*p-2], STDIN_FILENO); // reading end.
+                if (p == program_counts)
+                {
+                    dup2(stdout_dup, fileno(stdout));
+                }
+                //close previous reading end.
+                if (p>=2)
+                {
+                    int closing_i = 2*(p-2);
+                    close(fd[closing_i]);
+                }
+
+
+
+                if (strcmp(args_child[0], "help") == 0)
+                {
+                    sfish_help();
+                    exit(0);
+                }
+
+                if (strcmp(args_child[0], "pwd") == 0)
+                {
+                    sfish_pwd();
+                    exit(0);
+                }
+
+                Execvpe(args_child[0], args_child, envp);
                 debug("Return from execvpe\n");
             }
 
+
+        }
+
             pid = 0;
             /*Parent process*/
-            close(fd[0]);
             while(!pid){
                 sigsuspend(&prev);
             }
             //debug("GOT HERE AFTER SIGSUSPEND\n");
             Sigprocmask(SIG_SETMASK, &prev, NULL); // UNBLOCK FOR PARENT
             //pid = getpid();
-            dup2(STDOUT_FILENO, fileno(out_stream));
-            dup2(STDIN_FILENO, fileno(in_stream));
+            // if (p==1)
+            // {
+            //     close(fd[0]);
+            // }else{
+            //     close(fd_toProcess[1]);
+            // }
+            //Wait(NULL);
+            //dup2(fd[0], STDIN_FILENO);
+            // if (p == program_counts)
+            // {
+                int final_closing_reading_end = 2*program_counts-2;
+                close(fd[final_closing_reading_end]);
+            // }
 
-                //Fclose(in_stream);
-                //Fclose(out_stream);
+        //close(fd_toProcess[0]);
+        //close(fd_toProcess[1]);
+        close(fd[2*program_counts]);
+        close(fd[2*program_counts+1]);
+        dup2(stdin_dup, fileno(stdin));
+        dup2(stdout_dup, fileno(stdout));
 
+        return 1;
 
-            return 1;
-
-        }
+    }
     /*receive readed input and return parsed args[] pointer.
      * Caller should free the mem later.*/
     char** parse_input(char* input){
@@ -1045,14 +1117,14 @@
                 {
                     break;
                 }
-                if (strcmp(args_buf[0], "help")==0)
+                /*if (strcmp(args_buf[0], "help")==0)
                 {
                     break;
-                }
-                if (strcmp(args_buf[0], "pwd")==0)
+                }*/
+                /*if (strcmp(args_buf[0], "pwd")==0)
                 {
                     break;
-                }
+                }*/
                 if ((strcmp(args_buf[0], "cd") == 0) && (counter == 2))
                 {
                     break;
@@ -1111,34 +1183,98 @@
                     // strcpy(token_buf, token);
                     char* token_buf = token;
 
-                    char first = (char)(*(token_buf));
-                    char last = (char)(*(token_buf + strlen(token_buf)-1));
-                    if (first == '|')
-                    {
-                        args_buf[counter] = S_PIPE;
-                        counter++;
-                    }
+                    //char first = (char)(*(token_buf));
+                    //char last = (char)(*(token_buf + strlen(token_buf)-1));
+                    //char* last_p = token_buf + strlen(token_buf)-1;
+                    // if (first == '|')
+                    // {
+                    //     args_buf[counter] = S_PIPE;
+                    //     counter++;
+                    // }
 
-                    char* token2 = strtok(token_buf, "|");
+                    //char* token2 = strtok(token_buf, "|");
                     int times = 0;
+                    char* savepter4;
+                    char* firstSign = strstr(token_buf, "|");
+                    char* token2 = strtok_r(token_buf, "|", &savepter4);
+
+
+
                     while(token2!=NULL){
                         if ((counter+times) == (args_size/8-1))
                         {
                             args_size = args_size + 64;
                             args_buf = Realloc(args_buf, args_size);
                         }
-                        args_buf[counter] = token2;
+                        if (firstSign == NULL)
+                        {
+                            args_buf[counter] = token2;
+                            counter++;
+                        }else{
+
+                            if (strstr(token2, "|") == NULL)
+                            {
+                                if (firstSign < token2)
+                                {
+                                    args_buf[counter] = S_PIPE;
+                                    counter++;
+                                }
+                                args_buf[counter] = token2;
+                                counter++;
+                                if (token2 < firstSign)
+                                {
+                                    args_buf[counter] = S_PIPE;
+                                    counter++;
+                                }
+                            }
+                        }
+
+                        firstSign = strstr(savepter4, "|");
+                        token2 = strtok_r(NULL, "|", &savepter4);
+                        if (token2 == NULL&& savepter4 != NULL && strncmp(savepter4, "", 1)!=0)
+                        {
+                            if (firstSign<savepter4)
+                            {
+                                args_buf[counter] = S_PIPE;
+                                counter++;
+                            }
+                            args_buf[counter] = savepter4;
+                            counter++;
+                            if (savepter4 < firstSign)
+                            {
+                                args_buf[counter] = S_PIPE;
+                                counter++;
+                            }
+                        }
+
+                        /*args_buf[counter] = token2;
                         counter++;
                         args_buf[counter] = S_PIPE;
-                        counter++;
+                        counter++;*/
+                        //token2 = strtok(NULL, "|");
+                        /*if (strstr(token2, "|") == NULL)
+                        {
+                            args_buf[counter] = token2;
+                            counter++;
+                        }else{
+                            args_buf[counter] = S_PIPE;
+                            counter++;
+                        }
                         token2 = strtok(NULL, "|");
+                        token2 = strtok_r(NULL, "|", &savepter4);
+                        if (token2 == NULL && strncmp(savepter4, "", 1) != 0)
+                        {
+                            token2 = savepter4;
+
+                        }*/
                     }
-                    if (last != '|')
-                    {
-                        counter--;
-                        args_buf[counter] = NULL;
-                        counter++;
-                    }
+
+                    // if (last != '|')
+                    // {
+                    //     counter--;
+                    //     args_buf[counter] = NULL;
+                    //     counter++;
+                    // }
                 }
 
 
@@ -1147,14 +1283,14 @@
                 {
                     break;
                 }
-                if (strcmp(args_buf[0], "help")==0)
+                /*if (strcmp(args_buf[0], "help")==0)
                 {
                     break;
-                }
-                if (strcmp(args_buf[0], "pwd")==0)
+                }*/
+                /*if (strcmp(args_buf[0], "pwd")==0)
                 {
                     break;
-                }
+                }*/
                 if ((strcmp(args_buf[0], "cd") == 0) && (counter == 2))
                 {
                     break;
@@ -1168,6 +1304,7 @@
 
 
         }
+
 
 
 
@@ -1370,6 +1507,8 @@
             {
                 return 2;
             }
+        }else{
+            return 1;
         }
 
 
@@ -1460,6 +1599,7 @@
             {
                 continue;
             }
+
 
 
             if (mode == 0)

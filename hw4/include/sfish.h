@@ -14,7 +14,10 @@
 #define L_ANGLE        "<"
 #define R_ANGLE        ">"
 #define S_PIPE         "|"
-#define BUFFER_FILE    "buffer.txt"
+#define BUFFER_IN_FILE    "buffer_in.txt"
+#define BUFFER_OUT_FILE    "buffer_out.txt"
+#define BUFFER_IN_FILE_BACK    "buffer2_in.txt"
+#define BUFFER_OUT_FILE_BACK    "buffer2_out.txt"
 
 
 extern char oldpath[4096];
