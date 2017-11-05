@@ -19,8 +19,19 @@
 #define BUFFER_IN_FILE_BACK    "buffer2_in.txt"
 #define BUFFER_OUT_FILE_BACK    "buffer2_out.txt"
 
+#define RED     "\x1b[1;31m"
+#define GRN   "\x1b[1;32m"
+#define YEL  "\x1b[1;33m"
+#define BLU    "\x1b[1;34m"
+#define MAG "\x1b[1;35m"
+#define CYN    "\x1b[1;36m"
+#define WHT    "\x1b[1;37m"
+#define BWN    "\x1b[0;33m"
+#define RESET   "\x1b[0m"
+
 
 extern char oldpath[4096];
+extern char* color;
 //volatile extern FILE* fd_in;
 //volatile extern FILE* fd_out;
 
@@ -35,12 +46,13 @@ char** parse_input(char* input);
 int sfish_execute(int args_c, char** args, char* envp[]);
 int sfish_execute_r(int args_c, char** args, char* envp[]);
 int sfish_execute_p(int args_c, char** args, char* envp[]);
+void sfish_color(char* a);
 
 
 void sigchld_handler(int s);
 
 
-char* print_prompt();
+char* print_prompt(char* color);
 
 int args_validate(char** args_buf);// return
 int array_contain_count(char** args_buf, char* string, int argc);
@@ -48,8 +60,15 @@ int get_first_id(char** args_buf, char* string, int argc);
 int args_validate_and_set(char** args_buf);
 
 void sigint_handler(int sig);
+void sigstsp_handler(int s);
 
+struct job_list{
 
+    struct job_list *next;
+    struct job_list *prev;
+};
+
+typedef struct job_list job_list;
 
 
 

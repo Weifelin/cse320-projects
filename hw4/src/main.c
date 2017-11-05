@@ -11,6 +11,7 @@
 
     char oldpath[4096];
     volatile sig_atomic_t pid;
+    char* color = RESET;
 
 
     /*Shell Builtin command functions*/
@@ -159,9 +160,60 @@
         printf("%s\n", current_path);
         return;
     }
+
+    void sfish_color(char* a){
+        if (a == NULL || a == '\0')
+        {
+            printf("color not supported\n");
+        }
+        if (strcmp(a, "RED") != 0 &&
+            strcmp(a, "GRN") != 0 &&
+            strcmp(a, "YEL") != 0 &&
+            strcmp(a, "BLU") != 0 &&
+            strcmp(a, "MAG") != 0 &&
+            strcmp(a, "CYN") != 0 &&
+            strcmp(a, "WHT") != 0 &&
+            strcmp(a, "BWN") != 0)
+        {
+            printf("color not supported\n");
+        }
+
+        if (strcmp(a, "RED") == 0)
+        {
+            color = RED;
+        }
+        if (strcmp(a, "GRN") == 0)
+        {
+            color = GRN;
+        }
+        if (strcmp(a, "YEL") == 0)
+        {
+            color = YEL;
+        }
+        if (strcmp(a, "BLU") == 0)
+        {
+            color = BLU;
+        }
+        if (strcmp(a, "MAG") == 0)
+        {
+            color = MAG;
+        }
+        if (strcmp(a, "CYN") == 0)
+        {
+            color = CYN;
+        }
+        if (strcmp(a, "WHT") == 0)
+        {
+            color = WHT;
+        }
+        if (strcmp(a, "BWN") == 0)
+        {
+            color = BWN;
+        }
+    }
     /*Shell Builtin command functions impleneted*/
 
-    char* print_prompt(){
+    char* print_prompt(char* color){
 
 
         char* neid = "weifelin";
@@ -182,24 +234,28 @@
                 i++;
             }
 
-            char* retc = Malloc(strlen(new_cp) + strlen(neid)+9+1);
-            memset(retc, '\0', strlen(new_cp) + strlen(neid)+9+1);
+            char* retc = Malloc(strlen(new_cp) + strlen(neid)+9+1+strlen(color)+strlen(RESET));
+            memset(retc, '\0', strlen(new_cp) + strlen(neid)+9+1+strlen(color)+strlen(RESET));
             //printf("%s :: %s >> ", new_cp, NETID);
+            strcat(retc, color);
             strcat(retc, new_cp);
             strcat(retc, " :: ");
             strcat(retc, neid);
             strcat(retc, " >> ");
+            strcat(retc, RESET);
             return retc;
 
         } else {
             //printf("%s :: %s >> ", current_path, NETID);
             //char retc[strlen(new_cp) + strlen(neid)+9];
-            char* retc = Malloc(strlen(current_path) + strlen(neid)+9+1);
-            memset(retc, '\0', strlen(current_path) + strlen(neid)+9+1);
+            char* retc = Malloc(strlen(current_path) + strlen(neid)+9+1+strlen(color)+strlen(RESET));
+            memset(retc, '\0', strlen(current_path) + strlen(neid)+9+1+strlen(color)+strlen(RESET));
+            strcat(retc, color);
             strcat(retc, current_path);
             strcat(retc, " :: ");
             strcat(retc, neid);
             strcat(retc, " >> ");
+            strcat(retc, RESET);
             return retc;
         }
 
@@ -217,6 +273,26 @@
         int status;
         int olderrno = errno;
         // sig_atomic_t oldpid = pid;
+        pid = Waitpid(-1, &status, 0);
+        /**
+         * Cheaking status to see if child is terminated normally.
+         **/
+        //     if (WIFEXITED(status))
+        //     {
+        //         printf("child %d terminated normally with exit status=%d\n", pid, WEXITSTATUS(status));
+        //     }else{
+        //         printf("child %d terminated abnormally\n", pid);
+        //     }
+        // }
+
+        errno = olderrno;
+        // pid = oldpid;
+    }
+
+
+    void sigint_handler(int sig){
+        //Sio_puts("SIGINT.\n");
+        int status;
         if((pid = Waitpid(-1, &status, 0)) > 0){
         /**
          * Cheaking status to see if child is terminated normally.
@@ -228,17 +304,24 @@
                 printf("child %d terminated abnormally\n", pid);
             }
         }
-
-        errno = olderrno;
-        // pid = oldpid;
-    }
-
-
-    void sigint_handler(int sig){
-        Sio_puts("SIGINT.\n");
         _exit(0);
     }
 
+    void sigstsp_handler(int s){
+        int status;
+        if((pid = Waitpid(-1, &status, 0)) > 0){
+        /**
+         * Cheaking status to see if child is terminated normally.
+         **/
+            if (WIFEXITED(status))
+            {
+                printf("child %d terminated normally with exit status=%d\n", pid, WEXITSTATUS(status));
+            }else{
+                printf("child %d terminated abnormally\n", pid);
+            }
+        }
+        _exit(0);
+    }
 
 
 
@@ -278,6 +361,11 @@
             sfish_pwd();
             return 1;
         }
+        if (strcmp(args[0], "color") == 0)
+        {
+            sfish_color(args[1]);
+            return 1;
+        }
 
         //laucher below.- lauch other program.
         sigset_t mask, prev;
@@ -294,7 +382,7 @@
             {
                 Sigprocmask(SIG_SETMASK, &prev, NULL);//UNBLOCK FOR CHILD
                 Signal(SIGINT, sigchld_handler);
-                Signal(SIGTSTP, SIG_DFL);
+                Signal(SIGTSTP, sigstsp_handler);
                 //reading.
                 //close(fd[1]);
                 Execvpe(args[0], args, envp);
@@ -335,7 +423,11 @@
         {
             sfish_exit();
         }
-
+        if (strcmp(args[0], "color") == 0)
+        {
+            sfish_color(args[1]);
+            return 1;
+        }
 
 
         //determine mode.
@@ -433,7 +525,7 @@
             {
                 Sigprocmask(SIG_SETMASK, &prev, NULL);//UNBLOCK FOR CHILD
                 Signal(SIGINT, sigchld_handler);
-                Signal(SIGTSTP, SIG_DFL);
+                Signal(SIGTSTP, sigstsp_handler);
                 //reading.
                 //close(fd[1]);
                 dup2(fd[0], STDIN_FILENO);
@@ -569,6 +661,12 @@
             sfish_exit();
         }
 
+        if (strcmp(args[0], "color") == 0)
+        {
+            sfish_color(args[1]);
+            return 1;
+        }
+
 
 
         //determine mode.
@@ -642,7 +740,7 @@
                 Sigprocmask(SIG_SETMASK, &prev, NULL);//UNBLOCK FOR CHILD
 
                 Signal(SIGINT, sigchld_handler);
-                Signal(SIGTSTP, SIG_DFL);
+                Signal(SIGTSTP, sigstsp_handler);
 
                 close(fd[2*p-1]);//close previous writing end.
                 dup2(fd[2*p+1], STDOUT_FILENO); // writing end.
@@ -1162,6 +1260,11 @@
                     break;
                 }
 
+                if ((strcmp(args_buf[0], "color") == 0) && (counter == 2))
+                {
+                    break;
+                }
+
                 token = strtok_r(NULL, " ", &savepter);
 
             }
@@ -1324,6 +1427,11 @@
                     break;
                 }*/
                 if ((strcmp(args_buf[0], "cd") == 0) && (counter == 2))
+                {
+                    break;
+                }
+
+                if ((strcmp(args_buf[0], "color") == 0) && (counter == 2))
                 {
                     break;
                 }
@@ -1572,7 +1680,7 @@
 
         do {
 
-            char* cur_path_t = print_prompt();
+            char* cur_path_t = print_prompt(color);
             char cur_path[strlen(cur_path_t)+1];
             memset(cur_path, '\0', strlen(cur_path_t)+1 );
             strcpy(cur_path, cur_path_t);
