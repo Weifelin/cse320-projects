@@ -1,0 +1,7 @@
+pro3 arg1 <input>output
+pro3 arg1 <input> output
+pro3 arg1<input> output
+pro3           arg1<input>output
+
+
+exit

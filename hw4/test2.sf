@@ -1,0 +1,5 @@
+pro2 arg1 < output
+pro2 arg1<output
+pro2 arg1< output
+pro2 arg1 <output
+exit

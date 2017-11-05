@@ -1,0 +1,19 @@
+pro4 arg1 > input < output
+pro4 arg1>input<output
+pro4 arg1>input< output
+pro4 arg1>input < output
+pro4 arg1>input <output
+pro4 arg1> input<output
+pro4 arg1> input< output
+pro4 arg1> input <output
+pro4 arg1> input < output
+pro4 arg1 > input<output
+pro4 arg1 >input<output
+pro4 arg1 >input< output
+pro4 arg1 >input < output
+pro4 arg1 >input <output
+pro4 arg1 > input<output
+pro4 arg1 > input< output
+pro4 arg1 > input < output
+pro4 arg1 > input <output
+exit
