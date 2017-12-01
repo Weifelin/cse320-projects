@@ -5,7 +5,7 @@
 #include <stdio.h>
 
 #include "queue.h"
-#define NUM_THREADS 100
+#define NUM_THREADS 1
 
 queue_t *global_queue;
 
