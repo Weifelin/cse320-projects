@@ -326,6 +326,10 @@ args_t *parse_args(int argc, char **argv){
     {
         app_error("invalid argument.");
     }
+    if (number_workers == 1)
+    {
+        number_workers = 2;
+    }
     args->number_workers = number_workers;
     args->port_number = strdup(argv[2]);
     args->max_entries = max_entries;
