@@ -73,11 +73,14 @@ void* thread_routine(void* args){ // args is queue.
         request_header_t request_header;
         response_header_t response_header;
         int connected_fd = *((int*)dequeue(queue));
+        // if (fcntl(connected_fd, F_GETFD)== -1 || errno == EBADF){
+        //     continue;
+        // }
 
         signal(SIGPIPE, sigpipe_handler);
 
 
-        Rio_readn(connected_fd, &request_header, sizeof(request_header));
+        Rio_readn(connected_fd, &request_header, sizeof(request_header_t));
 
         if (errno == EINTR || errno == EPIPE)
         {
