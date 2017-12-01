@@ -51,6 +51,7 @@ hashmap_t *create_map(uint32_t capacity, hash_func_f hash_function, destructor_f
     hashmap -> destroy_function = destroy_function;
 
     map_node_t* nodes = Calloc(capacity, sizeof(map_node_t));
+
     if (nodes == NULL)
     {
         return NULL;
@@ -342,6 +343,7 @@ bool clear_map(hashmap_t *self) {
         }
 
     }
+
 
     pthread_mutex_unlock(&self-> write_lock);
 

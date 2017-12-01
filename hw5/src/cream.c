@@ -49,6 +49,9 @@ int main(int argc, char *argv[]) {
     int number_workers = args->number_workers;
     Free(args->port_number);
     Free(args);
+    item_destructor_f destory_function =  &queue_destroy_function;
+    invalidate_queue(queue, destory_function);
+
 
     for(int index = 0; number_workers; index++) {
         Pthread_join(thread_ids[index], NULL);

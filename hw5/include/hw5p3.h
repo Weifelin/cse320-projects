@@ -7,7 +7,7 @@
 #include <errno.h>
 
 #include "utils.h"
-#include "hashmap.h"
+//#include "hashmap.h"
 #include "queue.h"
 
 #define MAP_KEY(base, len) (map_key_t) {.key_base = base, .key_len = len}
