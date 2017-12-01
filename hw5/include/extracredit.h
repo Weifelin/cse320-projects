@@ -12,6 +12,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include "const.h"
+#include "queue.h"
 
 typedef struct map_key_t {
     void *key_base;
@@ -30,7 +31,6 @@ typedef struct map_node_t {
     map_key_t key;
     map_val_t val;
     bool tombstone;
-    bool least_recent; //revised.
 } map_node_t;
 
 typedef struct hashmap_t {
@@ -43,6 +43,7 @@ typedef struct hashmap_t {
     pthread_mutex_t write_lock;
     pthread_mutex_t fields_lock;
     bool invalid;
+    queue_t* queue;
 } hashmap_t;
 
 /* **DO NOT** modify the function prototypes below */
@@ -109,4 +110,7 @@ bool clear_map(hashmap_t *self);
  */
 bool invalidate_map(hashmap_t *self);
 
+void unamrk_lr(hashmap_t hashmap);
+
+void queue_destroy_function(void *item);
 #endif
