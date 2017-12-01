@@ -30,6 +30,7 @@ typedef struct map_node_t {
     map_key_t key;
     map_val_t val;
     bool tombstone;
+    bool least_recent; //revised.
 } map_node_t;
 
 typedef struct hashmap_t {
