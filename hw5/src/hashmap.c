@@ -149,6 +149,8 @@ bool put(hashmap_t *self, map_key_t key, map_val_t val, bool force) {
             { //full
                 if (force == true)
                 {
+
+                    self->destroy_function(nodes[index].key, nodes[index].val);
                     nodes[index].key = key;
                     nodes[index].val = val;
                     nodes[index].tombstone = false;

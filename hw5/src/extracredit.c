@@ -155,6 +155,7 @@ bool put(hashmap_t *self, map_key_t key, map_val_t val, bool force) {
                         front = dequeue(self -> queue);
                     }
 
+                    self->destroy_function(front -> key, front -> val);
                     front -> key = key;
                     front -> val = val;
                     front -> tombstone = false;
