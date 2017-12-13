@@ -1,0 +1,4 @@
+help - prints out the list of builtins
+exit - exits the shell(sfish) normally
+cd - changes the current working directory of the shell(sfish)
+pwd - prints the aboslute path of the current working directory
