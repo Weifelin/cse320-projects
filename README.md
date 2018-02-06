@@ -6,7 +6,7 @@ these simple description before looking further. Thanks you :)
 **hw0:**  This is where we started the course, including signing ACADEMIC HONESTY STATEMENT 
 shown below and setting up git environment in our virtual machine.
 
-**hw0:**  This is a command line utility to encrypt and decrypt strings and files by either Polybius cipher or Fractionated Morse cipher. Using "-h" command or checking "hw1/include/const.h" for details of this project.
+**hw1:**  This is a command line utility to encrypt and decrypt strings and files by either Polybius cipher or Fractionated Morse cipher. Using "-h" command or checking "hw1/include/const.h" for details of this project.
 
 **hw2:** This project couldn't reflect my skills since I only had one day to finish it due to some unexpected accidents. My work for this project is to fix compile, memory leak and functionality issue existed in the original code.  Only compile and memory leak issues were able to be fixed.
 
