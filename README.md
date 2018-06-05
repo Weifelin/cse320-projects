@@ -8,7 +8,7 @@ shown below and setting up git environment in our virtual machine.
 
 **hw1:**  This is a command line utility to encrypt and decrypt strings and files by either Polybius cipher or Fractionated Morse cipher. Using "-h" command or checking "hw1/include/const.h" for details of this project.
 
-**hw2:** This project couldn't reflect my skills since I only had one day to finish it due to some unexpected accidents. My work for this project is to fix compile, memory leak and functionality issue existed in the original code.  Only compile and memory leak issues were able to be fixed.
+**hw2:** My work for this project is to fix compile, memory leak and functionality issue existed in the original code.  Only compile and memory leak issues were able to be fixed. This project couldn't reflect my skills since I only had one day to finish it due to some unexpected accidents. 
 
 **hw3:** This project is all about dynamic memory allocator. It's my favorite project.
 
